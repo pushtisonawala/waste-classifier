@@ -4,10 +4,13 @@ exports.getStats = async (req, res) => {
 	try {
 		const total = await Classification.countDocuments();
 		const categories = await Classification.aggregate([
-			{ $group: { _id: '$category', count: { $sum: 1 } } }
+				{ $group: { _id: { $toLower: '$category' }, count: { $sum: 1 } } }
 		]);
-		const counts = categories.reduce((acc, cur) => {
-			acc[cur._id] = cur.count;
+		// Always include all categories with 0 if missing
+		const allCategories = ['trash', 'plastic', 'metal'];
+		const counts = allCategories.reduce((acc, cat) => {
+			const found = categories.find((c) => c._id === cat);
+			acc[cat] = found ? found.count : 0;
 			return acc;
 		}, {});
 		res.json({ total, ...counts });
@@ -42,7 +45,7 @@ exports.getDailyStats = async (req, res) => {
 				$group: {
 					_id: {
 						day: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-						category: '$category',
+						category: { $toLower: '$category' },
 					},
 					count: { $sum: 1 },
 				},

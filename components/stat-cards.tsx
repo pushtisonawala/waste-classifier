@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { StatCard as StatCardType } from '@/lib/types';
 
+
 interface StatCardsProps {
   stats: StatCardType[];
 }
@@ -56,12 +57,7 @@ export function StatCards({ stats }: StatCardsProps) {
               <div>
                 <p className={`text-3xl font-bold ${config.color}`}>
                   {stat.value.toLocaleString()}
-                    color: 'text-[rgb(var(--waste-organic))]',
-                  },
-                  trash: {
-                    color: 'text-[rgb(var(--waste-organic))]',
-                    bgColor: 'bg-green-50',
-                    icon: '🌱',
+                </p>
               </div>
 
               {/* Trend */}
@@ -84,15 +80,15 @@ export function StatCards({ stats }: StatCardsProps) {
                     />
                     <span className="text-[rgb(var(--waste-metal))]">
                       {Math.abs(stat.trend).toFixed(1)}%
-                          categoryConfig[stat.category === 'organic' ? 'trash' : stat.category as keyof typeof categoryConfig] ||
-                          categoryConfig.total;
+                    </span>
+                  </>
                 )}
                 <span className="text-gray-500">from yesterday</span>
               </div>
-            </div>
-          </Card>
-        );
-      })}
+              </div>
+            </Card>
+          );
+        })}
     </div>
   );
 }

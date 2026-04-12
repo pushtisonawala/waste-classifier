@@ -62,7 +62,11 @@ export function ActivityFeed({ classifications, limit = 10 }: ActivityFeedProps)
 
           <TableBody>
             {displayData.map((item) => {
-              const config = categoryConfig[item.category as keyof typeof categoryConfig];
+              const config = categoryConfig[item.category as keyof typeof categoryConfig] || {
+                label: item.category ? String(item.category) : 'Unknown',
+                color: 'bg-gray-200 text-gray-700',
+                icon: '❓',
+              };
               const timestamp = new Date(item.timestamp);
               const timeString = timestamp.toLocaleTimeString('en-US', {
                 hour: '2-digit',

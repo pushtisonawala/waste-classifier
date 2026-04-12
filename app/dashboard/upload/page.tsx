@@ -5,24 +5,29 @@ import { UploadZone } from '@/components/upload-zone';
 import { ClassificationResult } from '@/components/classification-result';
 import { Button } from '@/components/ui/button';
 import { Classification } from '@/lib/types';
-import { mockClassifications } from '@/lib/mock-data';
+import { classifyImage } from '@/lib/api';
 
 export default function UploadPage() {
   const [result, setResult] = useState<Classification | null>(null);
   const [isClassifying, setIsClassifying] = useState(false);
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     setIsClassifying(true);
-
-    setTimeout(() => {
-      const randomResult =
-        mockClassifications[Math.floor(Math.random() * mockClassifications.length)];
+    try {
+      const token = localStorage.getItem('token');
+      const res = await classifyImage(file, token || undefined);
       setResult({
-        ...randomResult,
-        timestamp: new Date(),
+        id: res.id || '',
+        imageUrl: res.imageUrl || '',
+        category: res.category,
+        confidence: res.confidence,
+        timestamp: res.timestamp ? new Date(res.timestamp) : new Date(),
       });
+    } catch (err: any) {
+      alert('Classification failed: ' + (err.message || 'Unknown error'));
+    } finally {
       setIsClassifying(false);
-    }, 1500);
+    }
   };
 
   const handleReset = () => {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { login } from '@/lib/api';
 import Link from 'next/link';
 import { Lock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,12 +18,19 @@ export function LoginCard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Simulate login delay
-    setTimeout(() => {
-      router.push('/dashboard/upload');
+    try {
+      const res = await login(email, password);
+      if (res.token) {
+        localStorage.setItem('token', res.token);
+        router.push('/dashboard/upload');
+      } else {
+        alert('Login failed: No token received');
+      }
+    } catch (err: any) {
+      alert('Login failed: ' + (err.message || 'Unknown error'));
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (

@@ -12,36 +12,43 @@ cloudinary.config({
 exports.classifyImage = async (req, res) => {
 	if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
 	try {
-		// Upload to Cloudinary
-		const streamUpload = () => {
-			return new Promise((resolve, reject) => {
-				const stream = cloudinary.uploader.upload_stream(
-					{ folder: 'waste-segregation' },
-					(error, result) => {
-						if (result) resolve(result);
-						else reject(error);
-					}
-				);
-				stream.end(req.file.buffer);
-			});
-		};
-		const uploadResult = await streamUpload();
+		       // Upload to Cloudinary
+		       const streamUpload = () => {
+			       return new Promise((resolve, reject) => {
+				       const stream = cloudinary.uploader.upload_stream(
+					       { folder: 'waste-segregation' },
+					       (error, result) => {
+						       if (result) resolve(result);
+						       else reject(error);
+					       }
+				       );
+				       stream.end(req.file.buffer);
+			       });
+		       };
+		       const uploadResult = await streamUpload();
 
-		// Send to ML service
-		const form = new FormData();
-		form.append('file', req.file.buffer, {
-			filename: req.file.originalname,
-			contentType: req.file.mimetype,
-		});
-		const mlRes = await axios.post(
-			process.env.ML_SERVICE_URL + '/predict',
-			form,
-			{ headers: form.getHeaders(), timeout: 10000 }
-		);
-		const { category, confidence } = mlRes.data;
-		if (!category || typeof confidence !== 'number') {
-			throw new Error('Invalid response from ML service');
-		}
+		       // Send to ML service
+		       const form = new FormData();
+		       form.append('file', req.file.buffer, {
+			       filename: req.file.originalname,
+			       contentType: req.file.mimetype,
+		       });
+		       console.log('Sending image to ML service:', process.env.ML_SERVICE_URL + '/predict');
+		       let mlRes;
+		       try {
+			       mlRes = await axios.post(
+				       process.env.ML_SERVICE_URL + '/predict',
+				       form,
+				       { headers: form.getHeaders(), timeout: 30000 }
+			       );
+		       } catch (mlErr) {
+			       console.error('Error from ML service:', mlErr);
+			       throw mlErr;
+		       }
+		       const { category, confidence } = mlRes.data;
+		       if (!category || typeof confidence !== 'number') {
+			       throw new Error('Invalid response from ML service');
+		       }
 
 		// Save to DB
 		const classification = await Classification.create({
