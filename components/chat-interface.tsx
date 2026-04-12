@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ChatMessage, QuickReply } from '@/lib/types';
 import { QuickReplyChips } from './quick-reply-chips';
 import { Card } from '@/components/ui/card';
+import { getStats, getActivity } from '@/lib/api';
 
 interface ChatInterfaceProps {
   initialMessages: ChatMessage[];
@@ -42,29 +43,48 @@ export function ChatInterface({ initialMessages, quickReplies }: ChatInterfacePr
     setInput('');
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        'That&apos;s a great question. Based on today&apos;s data, our organic waste is trending up by 15%.',
-        'According to our latest analysis, plastic waste comprises about 37% of our total classifications.',
-        'Our metal waste detection accuracy is currently at 94%, and improving daily.',
-        'Here are some tips to improve waste segregation: 1) Always sort items before submission, 2) Take clear photos, 3) Report any misclassifications.',
-        'The busiest time for waste classification is between 9 AM and 12 PM.',
-      ];
+    // Intent recognition (simple keyword matching)
+    const lower = messageText.toLowerCase();
+    let systemContent = '';
+    try {
+      const token = localStorage.getItem('token');
+      if (lower.includes('stat') || lower.includes('today')) {
+        // Fetch real stats
+        const stats = await getStats(token || undefined);
+        systemContent = `Today's stats:\n- Total: ${stats.total}\n- Trash: ${stats.trash}\n- Plastic: ${stats.plastic}\n- Metal: ${stats.metal}`;
+      } else if (lower.includes('top') || lower.includes('highest')) {
+        // Fetch activity and count categories
+        const activity = await getActivity(token || undefined);
+        const counts = { trash: 0, plastic: 0, metal: 0 };
+        (activity.data || []).forEach((item: any) => {
+          const cat = typeof item.category === 'string' ? item.category.toLowerCase() : item.category;
+          if (cat === 'trash') counts.trash++;
+          if (cat === 'plastic') counts.plastic++;
+          if (cat === 'metal') counts.metal++;
+        });
+        const topCat = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+        systemContent = `Top category: ${topCat[0].charAt(0).toUpperCase() + topCat[0].slice(1)} (${topCat[1]} items)`;
+      } else if (lower.includes('tip') || lower.includes('improve')) {
+        systemContent = 'Tips for better waste classification:\n1. Sort items before uploading.\n2. Take clear, well-lit photos.\n3. Double-check category suggestions.\n4. Report any misclassifications.';
+      } else if (lower.includes('status') || lower.includes('system')) {
+        systemContent = 'System is online and running smoothly. All analytics endpoints are operational.';
+      } else {
+        // Fallback
+        systemContent = "I'm here to help! Ask me about today's stats, top categories, tips, or system status.";
+      }
+    } catch (err: any) {
+      systemContent = 'Sorry, I could not fetch the latest data.';
+    }
 
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
+    const systemMessage: ChatMessage = {
+      id: `msg-${Date.now() + 1}`,
+      type: 'system',
+      content: systemContent,
+      timestamp: new Date(),
+    };
 
-      const systemMessage: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        type: 'system',
-        content: randomResponse,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, systemMessage]);
-      setIsLoading(false);
-    }, 800);
+    setMessages((prev) => [...prev, systemMessage]);
+    setIsLoading(false);
   };
 
   const handleQuickReply = (message: string) => {

@@ -6,7 +6,7 @@ export default function ChatPage() {
     {
       id: 'msg-1',
       type: 'system',
-      content: 'Hello! I&apos;m your Waste Segregation Assistant. Ask me anything about waste classification, statistics, or best practices.',
+      content: "Hello! I'm your Waste Segregation Assistant. Ask me anything about waste classification, statistics, or best practices.",
       timestamp: new Date(Date.now() - 5000),
     },
   ];
