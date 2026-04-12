@@ -32,7 +32,6 @@ Thumbs.db
 waste-ml/venv/
 waste-ml/__pycache__/
 waste-ml/**/*.pyc
-waste-ml/waste_model.h5
 
 # Dataset (do not version large data)
 waste-ml/datasets/
