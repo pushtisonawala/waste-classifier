@@ -44,7 +44,7 @@ exports.getDailyStats = async (req, res) => {
 			{
 				$group: {
 					_id: {
-						day: { $dateToString: { format: '%Y-%m-%d', damongte: '$createdAt' } },
+						day: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
 						category: { $toLower: '$category' },
 					},
 					count: { $sum: 1 },

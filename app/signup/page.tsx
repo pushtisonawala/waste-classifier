@@ -1,33 +1,47 @@
-'use client';
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Trash2, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { register as registerUser } from "@/lib/api";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { login } from '@/lib/api';
-import Link from 'next/link';
-import { Lock, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-
-export function LoginCard() {
+export default function SignupPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@wasteseg.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+  const validatePassword = (password) => {
+    // At least 8 chars, 1 uppercase, 1 lowercase, 1 number
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
+    if (!validateEmail(email)) {
+      setMessage("Please enter a valid email address.");
+      return;
+    }
+    if (!validatePassword(password)) {
+      setMessage("Password must be at least 8 characters, include uppercase, lowercase, and a number.");
+      return;
+    }
     setIsLoading(true);
     try {
-      const res = await login(email, password);
-      if (res.token) {
-        localStorage.setItem('token', res.token);
-        router.push('/dashboard/upload');
-      } else {
-        alert('Login failed: No token received');
-      }
-    } catch (err: any) {
-      alert('Login failed: ' + (err.message || 'Unknown error'));
+      await registerUser(name, email, password);
+      setMessage("Signup successful! Please login.");
+      setTimeout(() => router.push("/login"), 1200);
+    } catch (err) {
+      setMessage(err.message || "Signup failed");
     } finally {
       setIsLoading(false);
     }
@@ -54,20 +68,35 @@ export function LoginCard() {
         {/* Card Body */}
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="space-y-2">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              Name
+            </label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Your Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full"
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <div className="space-y-2">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email Address
             </label>
             <Input
               id="email"
               type="email"
-              placeholder="admin@example.com"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full"
+              required
               disabled={isLoading}
             />
           </div>
-
           <div className="space-y-2">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
@@ -79,32 +108,29 @@ export function LoginCard() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full"
+              required
               disabled={isLoading}
             />
           </div>
-
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-[rgb(var(--waste-organic))] to-[rgb(var(--waste-plastic))] text-white font-semibold"
             disabled={isLoading}
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? 'Signing up...' : 'Sign Up'}
           </Button>
-
           <div className="flex items-center gap-2 text-xs text-gray-600">
             <Lock size={14} />
-            <span>Secure login • Demo credentials pre-filled</span>
+            <span>Secure signup • Your data is safe</span>
           </div>
+          {message && <div className="text-center text-red-500 text-sm">{message}</div>}
         </form>
 
         {/* Card Footer */}
         <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 rounded-b-lg flex flex-col gap-2 items-center">
           <p className="text-xs text-gray-600">
-            Demo Mode: Use pre-filled credentials to explore the dashboard.
-          </p>
-          <p className="text-xs text-gray-700">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-blue-600 hover:underline font-medium">Register here</Link>
+            Already have an account?{' '}
+            <Link href="/login" className="text-blue-600 hover:underline font-medium">Sign in here</Link>
           </p>
         </div>
       </Card>
